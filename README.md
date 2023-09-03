@@ -1,2 +1,2 @@
 # ICP_based_localization-Gervasio
-Final project for the Robot Programming course fall 2022
+This is the final project for the Robot Programming course held by Professor Giorgio Grisetti at Sapienza University of Rome in the fall of 2022.
