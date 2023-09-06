@@ -44,7 +44,8 @@ int main(int argc, char** argv) {
 
   // Create shared pointer for the Map object
   // TODO
-
+  auto map = map_ptr;
+  
   //
   /**
    * Subscribe to the topics:
@@ -80,6 +81,13 @@ void callback_map(const nav_msgs::OccupancyGridConstPtr& msg_) {
   // Remember to load the map only once during the execution of the map.
 
   // TODO
+  if (!map_ptr->initialized()) {
+    return;
+    //Map::loadOccupancyGrid(msg_);
+  }
+
+  
+  return;
 }
 
 void callback_initialpose(
@@ -99,6 +107,8 @@ void callback_scan(const sensor_msgs::LaserScanConstPtr& msg_) {
    * [std::vector<Eigen::Vector2f, Eigen::aligned_allocator<Eigen::Vector2f>>]
    */
   // TODO
+  std::vector<Eigen::Vector2f, Eigen::aligned_allocator<Eigen::Vector2f>> scan;
+  scan2eigen(msg_, scan);
 
   /**
    * Set the laser parameters and process the incoming scan through the

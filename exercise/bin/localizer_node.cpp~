@@ -20,8 +20,6 @@ const std::string TOPIC_SCAN = "base_scan";
 const std::string TOPIC_POSE = "initialpose";
 const std::string TOPIC_ODOM = "odom_out";
 
-const std::string FRAME_WORLD = "map";
-
 // Map callback definition
 void callback_map(const nav_msgs::OccupancyGridConstPtr&);
 // Initial pose callback definition
