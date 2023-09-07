@@ -22,9 +22,21 @@ void Localizer2D::setMap(std::shared_ptr<Map> map_) {
    * Finally instantiate the KD-Tree (obst_tree_ptr) on the vector.
    */
   // TODO
+  if (_map->initialized()) {
+    const std::vector<int8_t>& grid = _map->grid();
+    for (int i=0; i<_map->rows(); i++) {
+      for (int j=0; j<_map->cols(); j++) {
+	if (grid[i, j]) {
+	  _obst_vect.push_back(_map->grid2world(cv::Point2i(i, j)));
+	}
+      }
+    }
+  }
 
   // Create KD-Tree
   // TODO
+  auto _obst = _obst_vect;
+  _obst_tree_ptr = std::make_shared<TreeType>(_obst.begin(), _obst.end(), 10);
 }
 
 /**
@@ -34,6 +46,7 @@ void Localizer2D::setMap(std::shared_ptr<Map> map_) {
  */
 void Localizer2D::setInitialPose(const Eigen::Isometry2f& initial_pose_) {
   // TODO
+  _laser_in_world = initial_pose_;
 }
 
 /**
@@ -72,7 +85,7 @@ void Localizer2D::process(const ContainerType& scan_) {
  *
  * @param range_min_
  * @param range_max_
- * @param angle_min_
+- * @param angle_min_
  * @param angle_max_
  * @param angle_increment_
  */
@@ -100,4 +113,8 @@ void Localizer2D::getPrediction(ContainerType& prediction_) {
    * You may use additional sensor's informations to refine the prediction.
    */
   // TODO
+  auto t = _laser_in_world.translation();
+  auto r = _laser_in_world.rotation();
+
+  
 }
