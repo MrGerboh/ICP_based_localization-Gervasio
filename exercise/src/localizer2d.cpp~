@@ -58,6 +58,9 @@ void Localizer2D::setInitialPose(const Eigen::Isometry2f& initial_pose_) {
 void Localizer2D::process(const ContainerType& scan_) {
   // Use initial pose to get a synthetic scan to compare with scan_
   // TODO
+  ContainerType _pred = ContainerType();
+  ContainerType& _pred_ptr = _pred;
+  getPrediction(_pred_ptr);
 
   /**
    * Align prediction and scan_ using ICP.
@@ -65,12 +68,16 @@ void Localizer2D::process(const ContainerType& scan_) {
    * solver X before running ICP)
    */
   // TODO
+  ICP icp(scan_, _pred_ptr, 4);
+  icp.X() = _laser_in_world;
+  icp.run(100);
 
   /**
    * Store the solver result (X) as the new laser_in_world estimate
    *
    */
   // TODO
+  _laser_in_world = _laser_in_world * icp.X();
 }
 
 /**
@@ -113,8 +120,44 @@ void Localizer2D::getPrediction(ContainerType& prediction_) {
    * You may use additional sensor's informations to refine the prediction.
    */
   // TODO
-  auto t = _laser_in_world.translation();
   auto r = _laser_in_world.rotation();
+  auto t = _laser_in_world.translation();
+  auto point_min = PointType(t.x() + _range_min, t.y() + _range_min);
+  point_min = r * point_min;
+  auto point_max = PointType(t.x() + _range_max, t.y() + _range_max);
+  point_max = r * point_max;
+  auto point_dist = (point_max - point_min).squaredNorm();
+  TreeType::AnswerType neighbors;
+  _obst_tree_ptr->fullSearch(neighbors, t, 10);
 
-  
+  //Without erasing elements after adding them
+  //Theoretically slower, but may be more consistent
+  //Needs testing
+  // for (auto a=_angle_min; a<=_angle_max; a+=_angle_increment) {
+  //   if (neighbors.size() == 0) return;
+  //   for (auto& n : neighbors) {
+  //     auto n_min = (point_min - n[0]).squaredNorm();
+  //     auto n_max = (point_max - n[0]).squaredNorm();
+  //     auto dist = fabs(n_min + n_max - point_dist);
+  //     if (dist <= 0.00001)
+  // 	prediction_.push_back(*n);
+  //   }
+  // }
+
+  //Erasing element after adding them
+  //Should be faster, but may be less consistent
+  auto n = neighbors.begin();
+  for (auto a=_angle_min; a<=_angle_max; a+=_angle_increment) {
+    while (n != neighbors.end()) {
+      auto n_min = (point_min - *n[0]).squaredNorm();
+      auto n_max = (point_max - *n[0]).squaredNorm();
+      auto dist = fabs(n_min + n_max - point_dist);
+      if (dist <= 0.00001) {
+	prediction_.push_back(*(*n));
+	n = neighbors.erase(n);
+	continue;
+      }
+      n++;
+    }
+  }
 }

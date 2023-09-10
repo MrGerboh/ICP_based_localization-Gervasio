@@ -26,7 +26,7 @@ void Localizer2D::setMap(std::shared_ptr<Map> map_) {
     const std::vector<int8_t>& grid = _map->grid();
     for (int i=0; i<_map->rows(); i++) {
       for (int j=0; j<_map->cols(); j++) {
-	if (grid[i, j]) {
+	if (grid[i * _map->cols() + j]) {
 	  _obst_vect.push_back(_map->grid2world(cv::Point2i(i, j)));
 	}
       }
@@ -58,6 +58,9 @@ void Localizer2D::setInitialPose(const Eigen::Isometry2f& initial_pose_) {
 void Localizer2D::process(const ContainerType& scan_) {
   // Use initial pose to get a synthetic scan to compare with scan_
   // TODO
+  ContainerType _pred = ContainerType();
+  ContainerType& _pred_ptr = _pred;
+  getPrediction(_pred_ptr);
 
   /**
    * Align prediction and scan_ using ICP.
@@ -65,12 +68,16 @@ void Localizer2D::process(const ContainerType& scan_) {
    * solver X before running ICP)
    */
   // TODO
+  ICP icp(scan_, _pred_ptr, 4);
+  icp.X() = _laser_in_world;
+  icp.run(100);
 
   /**
    * Store the solver result (X) as the new laser_in_world estimate
    *
    */
   // TODO
+  _laser_in_world = _laser_in_world * icp.X();
 }
 
 /**

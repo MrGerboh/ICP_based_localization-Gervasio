@@ -44,7 +44,7 @@ int main(int argc, char** argv) {
 
   // Create shared pointer for the Map object
   // TODO
-  auto map = map_ptr;
+  map_ptr = std::make_shared<Map>();
   
   //
   /**
@@ -82,12 +82,12 @@ void callback_map(const nav_msgs::OccupancyGridConstPtr& msg_) {
 
   // TODO
   if (!map_ptr->initialized()) {
-    return;
-    //Map::loadOccupancyGrid(msg_);
+    Map _map = Map();
+    *map_ptr = _map;
+    _map.loadOccupancyGrid(msg_);
+    localizer.setMap(map_ptr);
+    ROS_INFO("Map initialized.");
   }
-
-  
-  return;
 }
 
 void callback_initialpose(
@@ -99,6 +99,10 @@ void callback_initialpose(
    */
 
   // TODO
+  Eigen::Isometry2f initialpose_ = Eigen::Isometry2f::Identity();
+  pose2isometry(msg_->pose.pose, initialpose_);
+  localizer.setInitialPose(initialpose_);
+  ROS_INFO("Initial Pose saved.");
 }
 
 void callback_scan(const sensor_msgs::LaserScanConstPtr& msg_) {
@@ -115,6 +119,9 @@ void callback_scan(const sensor_msgs::LaserScanConstPtr& msg_) {
    * localizer
    */
   // TODO
+  localizer.setLaserParams(msg_->range_min, msg_->range_max, msg_->angle_min, msg_->angle_max, msg_->angle_increment);
+
+  localizer.process(scan);
 
   /**
    * Send a transform message between FRAME_WORLD and FRAME_LASER.
@@ -129,7 +136,11 @@ void callback_scan(const sensor_msgs::LaserScanConstPtr& msg_) {
    */
   static tf2_ros::TransformBroadcaster br;
   // TODO
-
+  geometry_msgs::TransformStamped tf_msg;
+  isometry2transformStamped(localizer.X(), tf_msg, FRAME_WORLD,
+			    msg_->header.frame_id, msg_->header.stamp);
+  br.sendTransform(tf_msg);
+  
   /**
    * Send a nav_msgs::Odometry message containing the current laser_in_world
    * transform.
@@ -137,6 +148,9 @@ void callback_scan(const sensor_msgs::LaserScanConstPtr& msg_) {
    * TransformStamped message to a nav_msgs::Odometry message.
    */
   // TODO
+  nav_msgs::Odometry odom_msg;
+  transformStamped2odometry(tf_msg, odom_msg);
+  pub_odom.publish(odom_msg);
 
   // Sends a copy of msg_ with FRAME_LASER set as frame_id
   // Used to visualize the scan attached to the current laser estimate.

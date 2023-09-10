@@ -44,7 +44,8 @@ int main(int argc, char** argv) {
 
   // Create shared pointer for the Map object
   // TODO
-
+  auto map = map_ptr;
+  
   //
   /**
    * Subscribe to the topics:
@@ -80,6 +81,12 @@ void callback_map(const nav_msgs::OccupancyGridConstPtr& msg_) {
   // Remember to load the map only once during the execution of the map.
 
   // TODO
+  if (!map_ptr->initialized()) {
+    Map _map = Map();
+    *map_ptr = _map;
+    _map.loadOccupancyGrid(msg_);
+    localizer.setMap(map_ptr);
+  }
 }
 
 void callback_initialpose(
@@ -91,6 +98,9 @@ void callback_initialpose(
    */
 
   // TODO
+  Eigen::Isometry2f initialpose_ = Eigen::Isometry2f::Identity();
+  pose2isometry(msg_->pose.pose, initialpose_);
+  localizer.setInitialPose(initialpose_);
 }
 
 void callback_scan(const sensor_msgs::LaserScanConstPtr& msg_) {
@@ -99,12 +109,17 @@ void callback_scan(const sensor_msgs::LaserScanConstPtr& msg_) {
    * [std::vector<Eigen::Vector2f, Eigen::aligned_allocator<Eigen::Vector2f>>]
    */
   // TODO
+  std::vector<Eigen::Vector2f, Eigen::aligned_allocator<Eigen::Vector2f>> scan;
+  scan2eigen(msg_, scan);
 
   /**
    * Set the laser parameters and process the incoming scan through the
    * localizer
    */
   // TODO
+  localizer.setLaserParams(msg_->range_min, msg_->range_max, msg_->angle_min, msg_->angle_max, msg_->angle_increment);
+
+  localizer.process(scan);
 
   /**
    * Send a transform message between FRAME_WORLD and FRAME_LASER.
@@ -119,7 +134,11 @@ void callback_scan(const sensor_msgs::LaserScanConstPtr& msg_) {
    */
   static tf2_ros::TransformBroadcaster br;
   // TODO
-
+  geometry_msgs::TransformStamped tf_msg;
+  isometry2transformStamped(localizer.X(), tf_msg, FRAME_WORLD,
+			    msg_->header.frame_id, msg_->header.stamp);
+  br.sendTransform(tf_msg);
+  
   /**
    * Send a nav_msgs::Odometry message containing the current laser_in_world
    * transform.
@@ -127,6 +146,9 @@ void callback_scan(const sensor_msgs::LaserScanConstPtr& msg_) {
    * TransformStamped message to a nav_msgs::Odometry message.
    */
   // TODO
+  nav_msgs::Odometry odom_msg;
+  transformStamped2odometry(tf_msg, odom_msg);
+  pub_odom.publish(odom_msg);
 
   // Sends a copy of msg_ with FRAME_LASER set as frame_id
   // Used to visualize the scan attached to the current laser estimate.
