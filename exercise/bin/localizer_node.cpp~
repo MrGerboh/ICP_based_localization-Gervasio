@@ -16,7 +16,7 @@
 #include "ros_bridge.h"
 
 // Define node I/O parameters
-const std::string TOPIC_SCAN = "base_scan";
+const std::string TOPIC_SCAN = "base_laser_link";
 const std::string TOPIC_POSE = "initialpose";
 const std::string TOPIC_ODOM = "odom_out";
 
@@ -44,7 +44,7 @@ int main(int argc, char** argv) {
 
   // Create shared pointer for the Map object
   // TODO
-  auto map = map_ptr;
+  map_ptr = std::make_shared<Map>();
   
   //
   /**
@@ -86,6 +86,7 @@ void callback_map(const nav_msgs::OccupancyGridConstPtr& msg_) {
     *map_ptr = _map;
     _map.loadOccupancyGrid(msg_);
     localizer.setMap(map_ptr);
+    ROS_INFO("Map initialized.");
   }
 }
 
@@ -101,6 +102,7 @@ void callback_initialpose(
   Eigen::Isometry2f initialpose_ = Eigen::Isometry2f::Identity();
   pose2isometry(msg_->pose.pose, initialpose_);
   localizer.setInitialPose(initialpose_);
+  ROS_INFO("Initial Pose saved.");
 }
 
 void callback_scan(const sensor_msgs::LaserScanConstPtr& msg_) {
@@ -136,7 +138,9 @@ void callback_scan(const sensor_msgs::LaserScanConstPtr& msg_) {
   // TODO
   geometry_msgs::TransformStamped tf_msg;
   isometry2transformStamped(localizer.X(), tf_msg, FRAME_WORLD,
-			    msg_->header.frame_id, msg_->header.stamp);
+			    FRAME_LASER, msg_->header.stamp);
+  //isometry2transformStamped(localizer.X(), tf_msg, FRAME_WORLD,
+  //			    msg_->header.frame_id, msg_->header.stamp);
   br.sendTransform(tf_msg);
   
   /**

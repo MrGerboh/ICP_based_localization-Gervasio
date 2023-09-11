@@ -138,7 +138,7 @@ void callback_scan(const sensor_msgs::LaserScanConstPtr& msg_) {
   // TODO
   geometry_msgs::TransformStamped tf_msg;
   isometry2transformStamped(localizer.X(), tf_msg, FRAME_WORLD,
-			    msg_->header.frame_id, msg_->header.stamp);
+			    FRAME_LASER, msg_->header.stamp);
   br.sendTransform(tf_msg);
   
   /**

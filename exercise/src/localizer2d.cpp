@@ -26,7 +26,7 @@ void Localizer2D::setMap(std::shared_ptr<Map> map_) {
     const std::vector<int8_t>& grid = _map->grid();
     for (int i=0; i<_map->rows(); i++) {
       for (int j=0; j<_map->cols(); j++) {
-	if (grid[i * _map->cols() + j]) {
+	if (grid[i * _map->cols() + j] > 0) {
 	  _obst_vect.push_back(_map->grid2world(cv::Point2i(i, j)));
 	}
       }
@@ -77,7 +77,7 @@ void Localizer2D::process(const ContainerType& scan_) {
    *
    */
   // TODO
-  _laser_in_world = _laser_in_world * icp.X();
+  _laser_in_world = icp.X();
 }
 
 /**
