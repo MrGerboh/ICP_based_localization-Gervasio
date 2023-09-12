@@ -35,8 +35,7 @@ void Localizer2D::setMap(std::shared_ptr<Map> map_) {
 
   // Create KD-Tree
   // TODO
-  auto _obst = _obst_vect;
-  _obst_tree_ptr = std::make_shared<TreeType>(_obst.begin(), _obst.end(), 10);
+  _obst_tree_ptr = std::make_shared<TreeType>(_obst_vect.begin(), _obst_vect.end(), 10);
 }
 
 /**
@@ -77,7 +76,8 @@ void Localizer2D::process(const ContainerType& scan_) {
    *
    */
   // TODO
-  _laser_in_world = icp.X();
+  //_laser_in_world = icp.X();
+  _laser_in_world = _laser_in_world * icp.X();
 }
 
 /**
@@ -139,6 +139,7 @@ void Localizer2D::getPrediction(ContainerType& prediction_) {
   //     auto n_min = (point_min - n[0]).squaredNorm();
   //     auto n_max = (point_max - n[0]).squaredNorm();
   //     auto dist = fabs(n_min + n_max - point_dist);
+  //     std::cerr << "added point " << dist << std::endl;
   //     if (dist <= 0.00001)
   // 	prediction_.push_back(*n);
   //   }
@@ -153,10 +154,10 @@ void Localizer2D::getPrediction(ContainerType& prediction_) {
       auto n_max = (point_max - *n[0]).squaredNorm();
       auto dist = fabs(n_min + n_max - point_dist);
       if (dist <= 0.00001) {
-	prediction_.push_back(*(*n));
-	n = neighbors.erase(n);
-	continue;
-      }
+  	prediction_.push_back(*(*n));
+  	n = neighbors.erase(n);
+  	continue;
+  	}
       n++;
     }
   }

@@ -16,7 +16,7 @@
 #include "ros_bridge.h"
 
 // Define node I/O parameters
-const std::string TOPIC_SCAN = "base_laser_link";
+const std::string TOPIC_SCAN = "base_scan";
 const std::string TOPIC_POSE = "initialpose";
 const std::string TOPIC_ODOM = "odom_out";
 
@@ -139,8 +139,6 @@ void callback_scan(const sensor_msgs::LaserScanConstPtr& msg_) {
   geometry_msgs::TransformStamped tf_msg;
   isometry2transformStamped(localizer.X(), tf_msg, FRAME_WORLD,
 			    FRAME_LASER, msg_->header.stamp);
-  //isometry2transformStamped(localizer.X(), tf_msg, FRAME_WORLD,
-  //			    msg_->header.frame_id, msg_->header.stamp);
   br.sendTransform(tf_msg);
   
   /**

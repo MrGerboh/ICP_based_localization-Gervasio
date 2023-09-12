@@ -82,9 +82,10 @@ void callback_map(const nav_msgs::OccupancyGridConstPtr& msg_) {
 
   // TODO
   if (!map_ptr->initialized()) {
-    Map _map = Map();
-    *map_ptr = _map;
-    _map.loadOccupancyGrid(msg_);
+    //Map _map = Map();
+    //*map_ptr = _map;
+    //_map.loadOccupancyGrid(msg_);
+    map_ptr->loadOccupancyGrid(msg_);
     localizer.setMap(map_ptr);
     ROS_INFO("Map initialized.");
   }
