@@ -60,14 +60,15 @@ void Localizer2D::process(const ContainerType& scan_) {
   ContainerType _pred = ContainerType();
   ContainerType& _pred_ptr = _pred;
   getPrediction(_pred_ptr);
-
+  
   /**
    * Align prediction and scan_ using ICP.
    * Set the current estimate of laser in world as initial guess (replace the
    * solver X before running ICP)
    */
   // TODO
-  ICP icp(scan_, _pred_ptr, 4);
+  ICP icp(_pred_ptr, scan_, 4);
+  //ICP icp(scan_, _pred_ptr, 4);
   icp.X() = _laser_in_world;
   icp.run(100);
 
@@ -76,8 +77,8 @@ void Localizer2D::process(const ContainerType& scan_) {
    *
    */
   // TODO
-  //_laser_in_world = icp.X();
-  _laser_in_world = _laser_in_world * icp.X();
+  _laser_in_world = icp.X();
+  //_laser_in_world = _laser_in_world * icp.X();
 }
 
 /**
@@ -129,36 +130,6 @@ void Localizer2D::getPrediction(ContainerType& prediction_) {
   auto point_dist = (point_max - point_min).squaredNorm();
   TreeType::AnswerType neighbors;
   _obst_tree_ptr->fullSearch(neighbors, t, 10);
-
-  //Without erasing elements after adding them
-  //Theoretically slower, but may be more consistent
-  //Needs testing
-  // for (auto a=_angle_min; a<=_angle_max; a+=_angle_increment) {
-  //   if (neighbors.size() == 0) return;
-  //   for (auto& n : neighbors) {
-  //     auto n_min = (point_min - n[0]).squaredNorm();
-  //     auto n_max = (point_max - n[0]).squaredNorm();
-  //     auto dist = fabs(n_min + n_max - point_dist);
-  //     std::cerr << "added point " << dist << std::endl;
-  //     if (dist <= 0.00001)
-  // 	prediction_.push_back(*n);
-  //   }
-  // }
-
-  //Erasing element after adding them
-  //Should be faster, but may be less consistent
-  auto n = neighbors.begin();
-  for (auto a=_angle_min; a<=_angle_max; a+=_angle_increment) {
-    while (n != neighbors.end()) {
-      auto n_min = (point_min - *n[0]).squaredNorm();
-      auto n_max = (point_max - *n[0]).squaredNorm();
-      auto dist = fabs(n_min + n_max - point_dist);
-      if (dist <= 0.00001) {
-  	prediction_.push_back(*(*n));
-  	n = neighbors.erase(n);
-  	continue;
-  	}
-      n++;
-    }
-  }
+  for (auto& n : neighbors)
+    prediction_.push_back(*n);
 }
