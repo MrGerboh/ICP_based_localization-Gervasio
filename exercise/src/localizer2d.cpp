@@ -68,7 +68,6 @@ void Localizer2D::process(const ContainerType& scan_) {
    */
   // TODO
   ICP icp(_pred_ptr, scan_, 4);
-  //ICP icp(scan_, _pred_ptr, 4);
   icp.X() = _laser_in_world;
   icp.run(100);
 
@@ -78,7 +77,6 @@ void Localizer2D::process(const ContainerType& scan_) {
    */
   // TODO
   _laser_in_world = icp.X();
-  //_laser_in_world = _laser_in_world * icp.X();
 }
 
 /**
